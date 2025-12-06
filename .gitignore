@@ -1,6 +1,5 @@
 resources/
 public/
-go.mod
 go.sum
 .DS_Store
 node_modules/
