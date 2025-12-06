@@ -63,9 +63,9 @@ jobs:
         run: |
           git config core.quotepath false
 
-      - name: Hugo mod tidy
+      - name: go mod tidy
         run: |
-          hugo mod tidy
+          go mod tidy
 
       - name: Build the site
         run: |
