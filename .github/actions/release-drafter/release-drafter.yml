@@ -49,7 +49,7 @@ autolabeler:
     title:
       - '/enhancement/i'
       - '/feature/i'
-  - label: 'bugfix'
+  - label: 'bug'
     title:
       - '/fix/i'
       - '/bug/i'
