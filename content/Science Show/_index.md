@@ -1,5 +1,5 @@
 ---
-description: Get curious about color, bubbles, liquids, and metal! Match science "tricks" with audience participation (30 min show). [Submit request HERE](https://forms.gle/NcHXSMk6ve8Y9y6YA)
+description: Get curious about color, bubbles, liquids, and metal! Match science "tricks" with audience participation (30 min show). [Submit request HERE.](https://forms.gle/NcHXSMk6ve8Y9y6YA)
 featured_image: science.png
 keywords: [Birthday, Party, Princess, Elsa, Superhero, Balloons twister, Face painter, Magic show, birthday cake, birthday decor, bubbles, bubbles show, catering, foam party, dj]
 title: Science Show
