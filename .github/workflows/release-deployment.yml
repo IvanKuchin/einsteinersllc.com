@@ -76,10 +76,26 @@ jobs:
             --baseURL "${{ env.BASE_URL }}/" \
             --cacheDir "${{ runner.temp }}/hugo_cache"
 
+      - name: Upload Hugo artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hugo-site
+          path: public/
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    env:
+      BUILD_REPO: ${{ github.event.repository.name }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download Hugo artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: hugo-site
+          path: public/
 
       - name: start deployment
         uses: bobheadxi/deployments@v1
@@ -90,28 +106,24 @@ jobs:
           env: release
           desc: "depl_id: ${{ github.event.deployment.id }}, ref_id: ${{ github.head_ref }}"
 
-      - name: init deployment variables
-        id: set_variables
+
+
+      - name: set deployment variables
+        id: vars
         run: |
-          echo ::set-output name=BUILD_RELEASE::${GITHUB_REF#refs/tags/}
-          echo ::set-output name=BUILD_RELEASE_MAJOR::`echo ${GITHUB_REF%%.*} | awk -F/ '{ print v$3; }'`
-          echo ::set-output name=BUILD_RELEASE_NUMBER::`echo ${GITHUB_REF#refs/tags/v}`
-          echo ::set-output name=BUILD_DATE::`date -u +'%Y-%m-%dT%H:%M:%SZ'`
-          echo ::set-output name=BUILD_REPO::$(echo ${GITHUB_REPOSITORY} | awk -F/ '{ print $2; }')
-          
-      - name: print deploymnet variables
+          echo "BUILD_RELEASE=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "BUILD_RELEASE_MAJOR=$(echo ${GITHUB_REF%%.*} | awk -F/ '{ print "v"$3; }')" >> $GITHUB_OUTPUT
+          echo "BUILD_RELEASE_NUMBER=$(echo ${GITHUB_REF#refs/tags/v})" >> $GITHUB_OUTPUT
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          echo "BUILD_REPO=$(echo ${GITHUB_REPOSITORY} | awk -F/ '{ print $2; }')" >> $GITHUB_OUTPUT
+
+      - name: print deployment variables
         run: |
-          echo $BUILD_RELEASE
-          echo $BUILD_RELEASE_MAJOR
-          echo $BUILD_RELEASE_NUMBER
-          echo $BUILD_DATE
-          echo $BUILD_REPO
-        env:
-          BUILD_RELEASE: ${{ steps.set_variables.outputs.BUILD_RELEASE }}
-          BUILD_RELEASE_MAJOR: ${{ steps.set_variables.outputs.BUILD_RELEASE_MAJOR }}
-          BUILD_RELEASE_NUMBER: ${{ steps.set_variables.outputs.BUILD_RELEASE_NUMBER }}
-          BUILD_DATE: ${{ steps.set_variables.outputs.BUILD_DATE }}
-          BUILD_REPO: ${{ steps.set_variables.outputs.BUILD_REPO }}
+          echo "BUILD_RELEASE: ${{ steps.vars.outputs.BUILD_RELEASE }}"
+          echo "BUILD_RELEASE_MAJOR: ${{ steps.vars.outputs.BUILD_RELEASE_MAJOR }}" 
+          echo "BUILD_RELEASE_NUMBER: ${{ steps.vars.outputs.BUILD_RELEASE_NUMBER }}"
+          echo "BUILD_DATE: ${{ steps.vars.outputs.BUILD_DATE }}"
+          echo "BUILD_REPO: ${{ steps.vars.outputs.BUILD_REPO }}"
           
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -127,17 +139,17 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           build-args: |
-            BUILD_DATE=${{ env.BUILD_DATE }}
+            BUILD_DATE=${{ steps.vars.outputs.BUILD_DATE }}
             BUILD_REVISION=${{ github.sha }}
             BUILD_VERSION=${{ github.sha }}
-            BUILD_REPO=${{ steps.set_variables.outputs.BUILD_REPO }}
-            BUILD_RELEASE_NUMBER=${{ steps.set_variables.outputs.BUILD_RELEASE_NUMBER }}
+            BUILD_REPO=${{ steps.vars.outputs.BUILD_REPO }}
+            BUILD_RELEASE_NUMBER=${{ steps.vars.outputs.BUILD_RELEASE_NUMBER }}
           target: app
           push: true
           tags: |
-            ghcr.io/ivankuchin/${{ steps.set_variables.outputs.BUILD_REPO }}:${{ steps.set_variables.outputs.BUILD_RELEASE }}
-            ghcr.io/ivankuchin/${{ steps.set_variables.outputs.BUILD_REPO }}:${{ steps.set_variables.outputs.BUILD_RELEASE_MAJOR }}
-            ghcr.io/ivankuchin/${{ steps.set_variables.outputs.BUILD_REPO }}:latest
+            ghcr.io/ivankuchin/${{ steps.vars.outputs.BUILD_REPO }}:${{ steps.vars.outputs.BUILD_RELEASE }}
+            ghcr.io/ivankuchin/${{ steps.vars.outputs.BUILD_REPO }}:${{ steps.vars.outputs.BUILD_RELEASE_MAJOR }}
+            ghcr.io/ivankuchin/${{ steps.vars.outputs.BUILD_REPO }}:latest
 
       - name: finish deployment
         uses: bobheadxi/deployments@v1
