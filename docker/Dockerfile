@@ -1,4 +1,4 @@
-FROM nginx:alpine as app
+FROM nginx:alpine AS app
 
 COPY ./public /usr/share/nginx/html
 
